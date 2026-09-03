@@ -34,6 +34,9 @@ public class MediaPipeHandTracker : MonoBehaviour
     private Vector3[] latestLandmarks = null;
     private bool hasNewData = false;
 
+    [Header("Camera Settings")]
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private float distanceFromCamera = 2.0f; // Distance from the camera to the hand landmarks
 
     private void Start() {
         CreateLandmarkPool();
@@ -60,6 +63,7 @@ public class MediaPipeHandTracker : MonoBehaviour
     }
 
     private void InitializeTracker() {
+        Debug.Log($"[CHECK 1] Is Tracker Initialized -> {isInitialized}");
         if (webcamController == null)
         {
             Debug.LogError("WebcamController is not assigned.");
@@ -101,23 +105,25 @@ public class MediaPipeHandTracker : MonoBehaviour
             return;
         }
 
-        RectTransform rawImageRectTransform = displayImage.rectTransform;
-        Vector3[] corners = new Vector3[4];
-        rawImageRectTransform.GetWorldCorners(corners);
-
-        float minX = corners[0].x;
-        float maxX = corners[2].x;
-        float minY = corners[0].y;
-        float maxY = corners[1].y;
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+        }
 
         for (int i = 0; i < LANDMARK_COUNT; i++)
         {
             Vector3 landmark = normalizedLandmarks[i];
-            float worldX = Mathf.Lerp(minX, maxX, landmark.x);
-            float worldY = Mathf.Lerp(minY, maxY, 1f - landmark.y); // Invert Y for Unity's coordinate system
-            float worldZ = landmark.z; // Depth can be used for scaling or other effects
+            
 
-            landmarkNodes[i].transform.position = new Vector3(worldX, worldY, worldZ);
+            float viewportX = landmark.x;
+            float viewportY = 1.0f - landmark.y; // Invert Y for Unity's coordinate system
+
+            float depth = distanceFromCamera - (landmark.z * 1.5f); // Use a fixed depth for simplicity
+
+            Vector3 viewportPoint = new Vector3(viewportX, viewportY, depth);
+            Vector3 worldPosition = mainCamera.ViewportToWorldPoint(viewportPoint);
+
+            landmarkNodes[i].transform.position = worldPosition;
             landmarkNodes[i].SetActive(true);
             
         }
@@ -159,6 +165,7 @@ public class MediaPipeHandTracker : MonoBehaviour
 
     private void ProcessWebcamFrame(WebCamTexture webCamTex)
     {
+
         if (texture2d == null || texture2d.width != webCamTex.width || texture2d.height != webCamTex.height)
         {
             texture2d = new Texture2D(webCamTex.width, webCamTex.height, TextureFormat.RGBA32, false);
@@ -178,6 +185,7 @@ public class MediaPipeHandTracker : MonoBehaviour
 
     private void OnHandLandmarkerResult(HandLandmarkerResult result,Mediapipe.Image image, long timestamp)
     {
+        
         if (result.handLandmarks != null && result.handLandmarks.Count > 0)
         {
             var landmarks = result.handLandmarks[0].landmarks;
