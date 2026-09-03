@@ -4,54 +4,60 @@ using UnityEngine;
 
 public class SpatialAirWriter : MonoBehaviour
 {
-    [Header("Line Settings")]
-    [Tooltip("Threshold distance between the thumb and index finger for pinch detection (Normalized in UI space)")]
-    [SerializeField] private float pinchThreshold = 0.05f;
+    [Header("Stylus Stabilization Settings")]
+    [Tooltip("Pen comes to rest at the new position over this time. Lower values = more responsive, but less stable.")]
+    [SerializeField] private float brushSmoothTime = 0f; 
+    [Tooltip("Minimum distance between points to add a new vertex to the line. Lower values = more vertices, but smoother lines.")]
+    [SerializeField] private float minVertexDistance = 0.015f;
 
     [Header("Line Settings")]
     [SerializeField] private Material lineMaterial;
     [SerializeField] private float startWidth = 0.15f;
     [SerializeField] private float endWidth = 0.15f;
-    [SerializeField] private float minVertexDistance = 0.005f;
-    [SerializeField] private Color defaultLineColor = Color.cyan;
-
-    [Header("Depth Baseline")]
-    [Tooltip("Default depth (Z) value for the hand landmarks when no depth information is available.")]
-    [SerializeField] private float defaultDepthZ = 2.0f;
+    [SerializeField] private Color defaultLineColor = Color.green;
 
     private LineRenderer currentLineRenderer;
     private List<Vector3> currentStrokePoints = new List<Vector3>();
+        
+    // Stabilizasyon Değişkenleri
     private bool isPinching = false;
+    private Vector3 smoothedCursorPos;
+    private Vector3 cursorVelocity = Vector3.zero;
+    private bool isFirstPoint = true; // Yeni çizgiye başlarken kalemi doğrudan ele oturtmak için
 
-
-    /// <summary>
-    /// Processes the air writing input based on the positions of the thumb tip and index finger tip.
-    /// If the distance between the two points is less than the pinch threshold, it starts or
-    /// updates the current stroke.
-    /// </summary>
-    /// <param name="drawPointWorld">The world position of the drawing point.</param>
-    /// <param name="isPinchActive">Indicates whether the pinch gesture is active.</param>
-
-    public void ProcessAirWriting(Vector3 drawPointWorld, bool isPinchActive)
+    public void ProcessAirWriting(Vector3 rawDrawPointWorld, bool isPinchActive)
     {
+        
+        if (isFirstPoint)
+        {
+            smoothedCursorPos = rawDrawPointWorld;
+        }
+        else
+        {
+            smoothedCursorPos = Vector3.SmoothDamp(smoothedCursorPos, rawDrawPointWorld, ref cursorVelocity, brushSmoothTime);
+        }
+
+            
         if (isPinchActive)
         {
             if (!isPinching)
             {
-                StartNewStroke(drawPointWorld);
+                StartNewStroke(smoothedCursorPos);
                 isPinching = true;
+                isFirstPoint = false;
             }
             else
             {
-                UpdateStroke(drawPointWorld);
+                UpdateStroke(smoothedCursorPos);
             }
         }
-         else
+        else
         {
             if (isPinching)
             {
                 EndStroke();
                 isPinching = false;
+                isFirstPoint = true;
             }
         }
     }
@@ -66,13 +72,11 @@ public class SpatialAirWriter : MonoBehaviour
         currentLineRenderer.endWidth = endWidth;
         currentLineRenderer.positionCount = 0;
         currentLineRenderer.useWorldSpace = true;
-        currentLineRenderer.numCornerVertices = 5;
-        currentLineRenderer.numCapVertices = 5;
-        currentLineRenderer.sortingOrder = 100;
+            
 
-        Material unlitMat = new Material(Shader.Find("Unlit/Color"));
-        unlitMat.color = defaultLineColor;
-        currentLineRenderer.material = unlitMat;
+        currentLineRenderer.numCornerVertices = 8;
+        currentLineRenderer.numCapVertices = 8;
+        currentLineRenderer.sortingOrder = 100;
 
         if (lineMaterial != null)
         {
@@ -80,12 +84,10 @@ public class SpatialAirWriter : MonoBehaviour
         }
         else
         {
-            currentLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            Material unlitMat = new Material(Shader.Find("Sprites/Default"));
+            unlitMat.color = defaultLineColor;
+            currentLineRenderer.material = unlitMat;
         }
-        
-        currentLineRenderer.startColor = defaultLineColor;
-        currentLineRenderer.endColor = defaultLineColor;
-
         currentStrokePoints.Clear();
         AddPointToStroke(startPoint);
     }
@@ -95,6 +97,8 @@ public class SpatialAirWriter : MonoBehaviour
         if (currentStrokePoints.Count == 0) return;
 
         Vector3 lastPoint = currentStrokePoints[currentStrokePoints.Count - 1];
+            
+        // Eğer kalem yeterince hareket ettiyse noktayı ekle
         if (Vector3.Distance(lastPoint, currentPoint) >= minVertexDistance)
         {
             AddPointToStroke(currentPoint);
@@ -112,16 +116,5 @@ public class SpatialAirWriter : MonoBehaviour
     {
         currentLineRenderer = null;
         currentStrokePoints.Clear();
-    }
-
-    /// <summary>
-    /// Clears all existing strokes from the scene.
-    /// </summary>
-    public void ClearAllStrokes()
-    {
-        foreach (Transform child in transform)
-        {
-            Destroy(child.gameObject);
-        }
     }
 }

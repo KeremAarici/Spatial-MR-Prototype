@@ -14,7 +14,7 @@ public class MediaPipeHandTracker : MonoBehaviour
 {
     [Header("Air Writing Settings")]
     [SerializeField] private SpatialAirWriter airWriter;
-
+    [SerializeField] private float pinchThreshold = 0.045f;
 
     [Header("Dependency")]
     [SerializeField] private WebcamController webcamController;
@@ -272,7 +272,12 @@ public class MediaPipeHandTracker : MonoBehaviour
             float rawDistance = Vector3.Distance(rawThumb, rawIndex);
 
             // 0.08f eşiği ham koordinat uzayında son derece hassas ve hatasız çalışır
-            bool isPinchActive = rawDistance < 0.08f;
+            bool isPinchActive = rawDistance < pinchThreshold; // Başlama eşiği toleranslı
+            if (airWriter != null)
+            {
+            // Pinch başladıysa, bırakmak için mesafenin daha fazla açılmasını bekle (Kopmayı engeller)
+            // Bu, tablet kalemiyle ekrana bastırdıktan sonraki basınç toleransıdır.
+            }
 
             // 2. 3D DÜNYA KOORDİNATLARINI HESAPLA
             Vector3[] corners = new Vector3[4];
