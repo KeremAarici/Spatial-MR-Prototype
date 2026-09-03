@@ -55,6 +55,7 @@ public class MediaPipeHandTracker : MonoBehaviour
     [Header("Alignment & Mirroring Settings")]
     [SerializeField] private bool flipX = true;  
     [SerializeField] private bool flipY = false;
+    [SerializeField] private bool swapHandedness = true; // Swap left and right hands if the camera feed is mirrored
 
     private void Start() {
         CreateLandmarkPoolS();
@@ -192,8 +193,15 @@ public class MediaPipeHandTracker : MonoBehaviour
                     handLabel = result.handedness[h].categories[0].categoryName;
                 }
 
-                
-                if (handLabel == "Left")
+                bool isLeft = (handLabel == "Left");
+
+                if (swapHandedness)
+                {
+                    isLeft = !isLeft;
+                }
+
+            
+                if (isLeft)
                 {
                     leftHandData.landmarks = positions;
                     leftHandData.isDetected = true;
@@ -202,12 +210,12 @@ public class MediaPipeHandTracker : MonoBehaviour
                 {
                     rightHandData.landmarks = positions;
                     rightHandData.isDetected = true;
+                   
                 }
             }
         }
         hasNewData = true;
     }
-
     private void UpdateHandVisualization(HandDataContainer handData, GameObject[] nodes)
     {
         if (!handData.isDetected || handData.landmarks == null || displayImage == null)

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 9135366096348836517}
   - component: {fileID: 1888970487194818064}
   m_Layer: 0
-  m_Name: LandmarkDot
+  m_Name: rgihthand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
