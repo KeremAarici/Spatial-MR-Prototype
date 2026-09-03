@@ -12,6 +12,10 @@ using Unity.Collections;
 
 public class MediaPipeHandTracker : MonoBehaviour
 {
+    [Header("Air Writing Settings")]
+    [SerializeField] private SpatialAirWriter airWriter;
+
+
     [Header("Dependency")]
     [SerializeField] private WebcamController webcamController;
     [SerializeField] private RawImage displayImage;
@@ -144,6 +148,8 @@ public class MediaPipeHandTracker : MonoBehaviour
         {
             UpdateHandVisualization(leftHandData, leftLandmarkNodes);
             UpdateHandVisualization(rightHandData, rightLandmarkNodes);
+
+            ProcessAirWritingLogic();
             hasNewData = false;
         }
     }
@@ -250,6 +256,64 @@ public class MediaPipeHandTracker : MonoBehaviour
             nodes[i].SetActive(true);
         }
     }
+
+
+    private void ProcessAirWritingLogic()
+    {
+        if (airWriter == null || displayImage == null) return;
+
+        HandDataContainer activeHand = rightHandData.isDetected ? rightHandData : (leftHandData.isDetected ? leftHandData : null);
+
+        if (activeHand != null && activeHand.isDetected && activeHand.landmarks != null && activeHand.landmarks.Length >= 9)
+        {
+            // 1. HAM MEDIAPIPE KOORDİNATLARINDA (0..1 Arası) PINCH MESAFESİ HESAPLA
+            Vector3 rawThumb = activeHand.landmarks[4];
+            Vector3 rawIndex = activeHand.landmarks[8];
+            float rawDistance = Vector3.Distance(rawThumb, rawIndex);
+
+            // 0.08f eşiği ham koordinat uzayında son derece hassas ve hatasız çalışır
+            bool isPinchActive = rawDistance < 0.08f;
+
+            // 2. 3D DÜNYA KOORDİNATLARINI HESAPLA
+            Vector3[] corners = new Vector3[4];
+            displayImage.rectTransform.GetWorldCorners(corners);
+
+            Vector3 thumbWorldPos = CalculateLandmarkWorldPosition(rawThumb, corners);
+            Vector3 indexWorldPos = CalculateLandmarkWorldPosition(rawIndex, corners);
+            
+            // Çizimin video ekranının önünde kalması için z-offset'i kesinleştiriyoruz
+            Vector3 drawWorldPoint = Vector3.Lerp(thumbWorldPos, indexWorldPos, 0.5f);
+
+            // 3. AIR WRITER'A GÖNDER
+            airWriter.ProcessAirWriting(drawWorldPoint, isPinchActive);
+        }
+    }
+
+    private Vector3 CalculateLandmarkWorldPosition(Vector3 landmark, Vector3[] corners)
+    {
+        float minX = corners[0].x;
+        float maxX = corners[2].x;
+        float minY = corners[0].y;
+        float maxY = corners[1].y;
+
+        float normX = flipX ? (1.0f - landmark.x) : landmark.x;
+        float normY = flipY ? landmark.y : (1.0f - landmark.y);
+
+        float worldX = Mathf.Lerp(minX, maxX, normX);
+        float worldY = Mathf.Lerp(minY, maxY, normY);
+        
+        Vector3 targetWorldPos = new Vector3(worldX, worldY, displayImage.transform.position.z);
+
+        if (mainCamera != null)
+        {
+            return Vector3.Lerp(mainCamera.transform.position, targetWorldPos, 0.7f);
+        }
+
+        targetWorldPos.z -= 0.8f;
+        return targetWorldPos;
+
+    }
+
 
     private void OnDestroy()
     {
