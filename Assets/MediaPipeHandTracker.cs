@@ -38,6 +38,10 @@ public class MediaPipeHandTracker : MonoBehaviour
     [SerializeField] private Camera mainCamera;
     [SerializeField] private float distanceFromCamera = 2.0f; // Distance from the camera to the hand landmarks
 
+    [Header("Alignment & Mirroring Settings")]
+    [SerializeField] private bool flipX = true;  
+    [SerializeField] private bool flipY = false;
+
     private void Start() {
         CreateLandmarkPool();
         InitializeTracker();
@@ -101,31 +105,42 @@ public class MediaPipeHandTracker : MonoBehaviour
     {
         if (normalizedLandmarks == null || normalizedLandmarks.Length != LANDMARK_COUNT)
         {
-            Debug.LogError("Invalid landmark data received.");
+            Debug.LogError("[MediaPipe] Geçersiz landmark verisi alındı.");
             return;
         }
 
-        if (mainCamera == null)
+        if (displayImage == null)
         {
-            mainCamera = Camera.main;
-        }
+            Debug.LogError("[MediaPipe] displayImage (RawImage) referansı eksik!");
+            return;
+        }   
+
+
+        Vector3[] corners = new Vector3[4];
+        displayImage.rectTransform.GetWorldCorners(corners);
+
+        float minX = corners[0].x;
+        float maxX = corners[2].x;
+        float minY = corners[0].y;
+        float maxY = corners[1].y;
+        float imageZ = displayImage.transform.position.z;
 
         for (int i = 0; i < LANDMARK_COUNT; i++)
         {
             Vector3 landmark = normalizedLandmarks[i];
+
             
+            float normX = flipX ? (1.0f - landmark.x) : landmark.x;
+            float normY = flipY ? landmark.y : (1.0f - landmark.y);
 
-            float viewportX = landmark.x;
-            float viewportY = 1.0f - landmark.y; // Invert Y for Unity's coordinate system
+            float worldX = Mathf.Lerp(minX, maxX, normX);
+            float worldY = Mathf.Lerp(minY, maxY, normY);
+        
+            
+            float worldZ = imageZ - 0.1f - (landmark.z * 0.2f);
 
-            float depth = distanceFromCamera - (landmark.z * 1.5f); // Use a fixed depth for simplicity
-
-            Vector3 viewportPoint = new Vector3(viewportX, viewportY, depth);
-            Vector3 worldPosition = mainCamera.ViewportToWorldPoint(viewportPoint);
-
-            landmarkNodes[i].transform.position = worldPosition;
+            landmarkNodes[i].transform.position = new Vector3(worldX, worldY, worldZ);
             landmarkNodes[i].SetActive(true);
-            
         }
     }
 
