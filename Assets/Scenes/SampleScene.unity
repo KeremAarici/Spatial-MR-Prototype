@@ -183,11 +183,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05ca289b170e3cb45a14c08b069363bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tubeWriter: {fileID: 0}
+  tubeWriter: {fileID: 785443509}
   depthRunner: {fileID: 320345571}
   pinchStartThreshold: 0.04
   pinchReleaseThreshold: 0.07
   pinchLostToleranceTime: 0.15
+  zOffsetTowardsCamera: 3
   webcamController: {fileID: 11417512}
   displayImage: {fileID: 1412349580}
   leftHandLandmarkPrefab: {fileID: 7300468855299194320, guid: 41866846af19b6f42aa199f155340f82,
@@ -618,7 +619,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d73c49ea7bf10949ac4574353d144ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tubeRadius: 0.015
+  tubeRadius: 1
   radialSegments: 8
   minVertexDistance: 0.015
   metallicMaterial: {fileID: 2100000, guid: 31b350d52de5c69488658bc79ac38482, type: 2}
@@ -666,6 +667,108 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1163130277
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1163130281}
+  - component: {fileID: 1163130280}
+  - component: {fileID: 1163130279}
+  - component: {fileID: 1163130278}
+  m_Layer: 0
+  m_Name: RoomReconstructor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1163130278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1163130277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1713edd43ca7d9746a69df25d1fad8f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  depthRunner: {fileID: 320345571}
+  displayImage: {fileID: 1412349580}
+  mainCamera: {fileID: 330585545}
+  gridWidth: 64
+  gridHeight: 64
+  liveUpdate: 1
+--- !u!23 &1163130279
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1163130277}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1163130280
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1163130277}
+  m_Mesh: {fileID: 0}
+--- !u!4 &1163130281
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1163130277}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 21.864838, y: 39.957623, z: 83.828766}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -889,3 +992,4 @@ SceneRoots:
   - {fileID: 1354561260}
   - {fileID: 785443508}
   - {fileID: 320345572}
+  - {fileID: 1163130281}

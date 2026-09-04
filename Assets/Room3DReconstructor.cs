@@ -21,6 +21,7 @@ public class Room3DReconstructor : MonoBehaviour
 
 
     private Mesh mesh;
+    private MeshRenderer meshRenderer;
     private Vector3[] vertices;
     private Vector2[] uvs;
     private int[] triangles;
@@ -28,8 +29,21 @@ public class Room3DReconstructor : MonoBehaviour
 
     void Start()
     {
+        meshRenderer = GetComponent<MeshRenderer>();
+        CreateDefaultMaterial();
         InitializeGridMesh();
     }
+
+    private void CreateDefaultMaterial()
+    {
+        Shader defaultShader = Shader.Find("Universal Render Pipeline/Unlit") 
+                            ?? Shader.Find("Unlit/Texture") 
+                            ?? Shader.Find("Standard");
+
+        Material mat = new Material(defaultShader);
+        meshRenderer.material = mat;
+    }
+
 
     private void InitializeGridMesh()
     {
@@ -83,7 +97,12 @@ public class Room3DReconstructor : MonoBehaviour
 
     void Update()
     {
-        if(liveUpdate)
+        if (displayImage != null && displayImage.texture != null && meshRenderer.material.mainTexture == null)
+        {
+            meshRenderer.material.mainTexture = displayImage.texture;
+        }
+
+        if (liveUpdate)
         {
             ReconstructRoomGeometry();
         }
