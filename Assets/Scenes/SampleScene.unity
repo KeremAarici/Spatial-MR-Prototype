@@ -183,8 +183,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05ca289b170e3cb45a14c08b069363bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  airWriter: {fileID: 785443507}
-  pinchThreshold: 0.035
+  tubeWriter: {fileID: 0}
+  depthRunner: {fileID: 320345571}
+  pinchStartThreshold: 0.04
+  pinchReleaseThreshold: 0.07
+  pinchLostToleranceTime: 0.15
   webcamController: {fileID: 11417512}
   displayImage: {fileID: 1412349580}
   leftHandLandmarkPrefab: {fileID: 7300468855299194320, guid: 41866846af19b6f42aa199f155340f82,
@@ -260,6 +263,57 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &320345570
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 320345572}
+  - component: {fileID: 320345571}
+  m_Layer: 0
+  m_Name: DepthEsitmator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &320345571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 320345570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a106272457517f418e72699d4cb54eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  depthModelAsset: {fileID: 5022602860645237092, guid: 28dcb314be5c887439d3a21af496e045,
+    type: 3}
+  webcamController: {fileID: 11417512}
+  modelWidth: 256
+  modelHeight: 256
+  minDepthMeters: 0.5
+  maxDepthMeters: 4
+--- !u!4 &320345572
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 320345570}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9.033236, y: 4.332428, z: 84.46464}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -529,7 +583,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 785443508}
-  - component: {fileID: 785443507}
+  - component: {fileID: 785443509}
   m_Layer: 0
   m_Name: SpatialAirWriter
   m_TagString: Untagged
@@ -537,24 +591,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &785443507
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 785443506}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2e6331a8461bee40870385279b4419b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  brushSmoothTime: 0.06
-  minVertexDistance: 0.008
-  lineMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
-  startWidth: 2
-  endWidth: 2
-  defaultLineColor: {r: 0.100242615, g: 0, b: 1, a: 1}
 --- !u!4 &785443508
 Transform:
   m_ObjectHideFlags: 0
@@ -570,6 +606,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &785443509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 785443506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d73c49ea7bf10949ac4574353d144ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tubeRadius: 0.015
+  radialSegments: 8
+  minVertexDistance: 0.015
+  metallicMaterial: {fileID: 2100000, guid: 31b350d52de5c69488658bc79ac38482, type: 2}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -836,3 +888,4 @@ SceneRoots:
   - {fileID: 11417513}
   - {fileID: 1354561260}
   - {fileID: 785443508}
+  - {fileID: 320345572}

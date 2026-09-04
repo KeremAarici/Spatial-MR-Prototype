@@ -13,7 +13,8 @@ using Unity.Collections;
 public class MediaPipeHandTracker : MonoBehaviour
 {
     [Header("Air Writing Settings")]
-    [SerializeField] private SpatialAirWriter airWriter;
+    [SerializeField] private ProceduralTubeWriter tubeWriter;
+    [SerializeField] private DepthEstimationRunner depthRunner;
     [SerializeField] private float pinchStartThreshold = 0.04f;
     [SerializeField] private float pinchReleaseThreshold = 0.07f;
     [SerializeField] private float pinchLostToleranceTime = 0.15f; // Tolerance time for pinch release to avoid flickering
@@ -266,7 +267,7 @@ public class MediaPipeHandTracker : MonoBehaviour
 
     private void ProcessAirWritingLogic()
     {
-        if (airWriter == null || displayImage == null) return;
+        if (tubeWriter == null || displayImage == null) return;
 
         HandDataContainer activeHand = rightHandData.isDetected ? rightHandData : (leftHandData.isDetected ? leftHandData : null);
 
@@ -316,7 +317,7 @@ public class MediaPipeHandTracker : MonoBehaviour
             Vector3 drawWorldPoint = Vector3.Lerp(thumbWorldPos, indexWorldPos, 0.5f);
 
             // Hesaplanan stabil Pinch durumunu AirWriter'a gönderiyoruz
-            airWriter.ProcessAirWriting(drawWorldPoint, isCurrentlyPinching);
+            tubeWriter.ProcessAirWriting(drawWorldPoint, isCurrentlyPinching);
         }
         else
         {
@@ -327,7 +328,7 @@ public class MediaPipeHandTracker : MonoBehaviour
                 pinchLostTimer = 0f;
                 
                 // Son noktayı göndererek çizginin havada kalmadan bitmesini sağla
-                airWriter.ProcessAirWriting(Vector3.zero, false); 
+                tubeWriter.ProcessAirWriting(Vector3.zero, false); 
             }
         }
     }
@@ -344,17 +345,19 @@ public class MediaPipeHandTracker : MonoBehaviour
 
         float worldX = Mathf.Lerp(minX, maxX, normX);
         float worldY = Mathf.Lerp(minY, maxY, normY);
-        
-        Vector3 targetWorldPos = new Vector3(worldX, worldY, displayImage.transform.position.z);
+        float aiDepth = (depthRunner != null) ? depthRunner.GetDepthAtUV(normX, normY) : -1f;
 
-        if (mainCamera != null)
+        float worldZ;
+        if (aiDepth > 0)
         {
-            return Vector3.Lerp(mainCamera.transform.position, targetWorldPos, 0.7f);
+            worldZ = displayImage.transform.position.z - aiDepth;
+        }
+        else
+        {
+            worldZ = displayImage.transform.position.z - 0.2f;
         }
 
-        targetWorldPos.z -= 0.8f;
-        return targetWorldPos;
-
+        return new Vector3(worldX, worldY, worldZ);
     }
 
 
