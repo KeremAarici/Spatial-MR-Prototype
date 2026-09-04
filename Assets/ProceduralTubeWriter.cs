@@ -63,7 +63,8 @@ public class ProceduralTubeWriter : MonoBehaviour
     private void StartNewTube(Vector3 startPoint)
     {
         currentTubeObj = new GameObject($"SpatialTube_{Time.time}");
-        currentTubeObj.transform.SetParent(transform);
+        currentTubeObj.transform.position = Vector3.zero;
+        currentTubeObj.transform.rotation = Quaternion.identity;
 
         MeshFilter mf = currentTubeObj.AddComponent<MeshFilter>();
         MeshRenderer mr = currentTubeObj.AddComponent<MeshRenderer>();
@@ -71,6 +72,11 @@ public class ProceduralTubeWriter : MonoBehaviour
         if (metallicMaterial != null)
         {
             mr.material = metallicMaterial;
+        }
+        else
+        {
+            Shader defaultShader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            mr.material = new Material(defaultShader) { color = Color.yellow};
         }
 
         currentMesh = new Mesh();
@@ -110,7 +116,7 @@ public class ProceduralTubeWriter : MonoBehaviour
             Vector3 forward = GetPathForward(i);
             Quaternion rotation = Quaternion.LookRotation(forward);
 
-            // Her nokta etrafında yuvarlak tüp halkası üret
+            
             for (int j = 0; j < radialSegments; j++)
             {
                 float angle = (j / (float)radialSegments) * Mathf.PI * 2f;
@@ -122,7 +128,7 @@ public class ProceduralTubeWriter : MonoBehaviour
                 normals.Add(worldNormal);
             }
 
-            // Poligon yüzeylerini (Triangles) bağla
+           
             if (i > 0)
             {
                 int ringStart = i * radialSegments;
@@ -152,6 +158,9 @@ public class ProceduralTubeWriter : MonoBehaviour
         currentMesh.SetVertices(vertices);
         currentMesh.SetNormals(normals);
         currentMesh.SetTriangles(triangles, 0);
+
+        currentMesh.RecalculateBounds();
+        currentMesh.RecalculateNormals();
     }
 
     private Vector3 GetPathForward(int index)

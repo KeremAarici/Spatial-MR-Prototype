@@ -18,6 +18,8 @@ public class MediaPipeHandTracker : MonoBehaviour
     [SerializeField] private float pinchStartThreshold = 0.04f;
     [SerializeField] private float pinchReleaseThreshold = 0.07f;
     [SerializeField] private float pinchLostToleranceTime = 0.15f; // Tolerance time for pinch release to avoid flickering
+    [SerializeField] private float zOffsetTowardsCamera = 0.3f;
+
 
     private bool isCurrentlyPinching = false;
     private float pinchLostTimer = 0f;
@@ -345,19 +347,38 @@ public class MediaPipeHandTracker : MonoBehaviour
 
         float worldX = Mathf.Lerp(minX, maxX, normX);
         float worldY = Mathf.Lerp(minY, maxY, normY);
+
         float aiDepth = (depthRunner != null) ? depthRunner.GetDepthAtUV(normX, normY) : -1f;
 
         float worldZ;
         if (aiDepth > 0)
         {
+            
             worldZ = displayImage.transform.position.z - aiDepth;
         }
         else
         {
+            
             worldZ = displayImage.transform.position.z - 0.2f;
         }
 
-        return new Vector3(worldX, worldY, worldZ);
+        Vector3 targetWorldPos = new Vector3(worldX, worldY, worldZ);
+
+        
+        if (mainCamera != null)
+        {
+            Vector3 dirToCamera = (mainCamera.transform.position - targetWorldPos).normalized;
+            
+            
+            targetWorldPos += dirToCamera * zOffsetTowardsCamera;
+        }
+        else
+        {
+            
+            targetWorldPos.z += zOffsetTowardsCamera;
+        }
+
+        return targetWorldPos;
     }
 
 
