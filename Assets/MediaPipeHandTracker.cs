@@ -14,7 +14,13 @@ public class MediaPipeHandTracker : MonoBehaviour
 {
     [Header("Air Writing Settings")]
     [SerializeField] private SpatialAirWriter airWriter;
-    [SerializeField] private float pinchThreshold = 0.045f;
+    [SerializeField] private float pinchStartThreshold = 0.04f;
+    [SerializeField] private float pinchReleaseThreshold = 0.07f;
+    [SerializeField] private float pinchLostToleranceTime = 0.15f; // Tolerance time for pinch release to avoid flickering
+
+    private bool isCurrentlyPinching = false;
+    private float pinchLostTimer = 0f;
+
 
     [Header("Dependency")]
     [SerializeField] private WebcamController webcamController;
@@ -266,31 +272,63 @@ public class MediaPipeHandTracker : MonoBehaviour
 
         if (activeHand != null && activeHand.isDetected && activeHand.landmarks != null && activeHand.landmarks.Length >= 9)
         {
-            // 1. HAM MEDIAPIPE KOORDİNATLARINDA (0..1 Arası) PINCH MESAFESİ HESAPLA
             Vector3 rawThumb = activeHand.landmarks[4];
             Vector3 rawIndex = activeHand.landmarks[8];
             float rawDistance = Vector3.Distance(rawThumb, rawIndex);
 
-            // 0.08f eşiği ham koordinat uzayında son derece hassas ve hatasız çalışır
-            bool isPinchActive = rawDistance < pinchThreshold; // Başlama eşiği toleranslı
-            if (airWriter != null)
+            // --- PROFESYONEL PINCH ALGORİTMASI ---
+            if (isCurrentlyPinching)
             {
-            // Pinch başladıysa, bırakmak için mesafenin daha fazla açılmasını bekle (Kopmayı engeller)
-            // Bu, tablet kalemiyle ekrana bastırdıktan sonraki basınç toleransıdır.
+                // Eğer çizim yapıyorsak, BİTİRME eşiğine bak (Daha geniş bir mesafe)
+                if (rawDistance > pinchReleaseThreshold)
+                {
+                    // Parmaklar açıldı, ama hemen koparma, zamanlayıcıyı başlat
+                    pinchLostTimer += Time.deltaTime;
+                    
+                    if (pinchLostTimer >= pinchLostToleranceTime)
+                    {
+                        isCurrentlyPinching = false; // Süre doldu, artık gerçekten bıraktı
+                    }
+                }
+                else
+                {
+                    // Parmaklar hala yakın, zamanlayıcıyı sıfırla
+                    pinchLostTimer = 0f;
+                }
             }
+            else
+            {
+                // Eğer çizim yapmıyorsak, BAŞLAMA eşiğine bak (Daha sıkı bir mesafe)
+                if (rawDistance < pinchStartThreshold)
+                {
+                    isCurrentlyPinching = true;
+                    pinchLostTimer = 0f;
+                }
+            }
+            // -------------------------------------
 
-            // 2. 3D DÜNYA KOORDİNATLARINI HESAPLA
             Vector3[] corners = new Vector3[4];
             displayImage.rectTransform.GetWorldCorners(corners);
 
             Vector3 thumbWorldPos = CalculateLandmarkWorldPosition(rawThumb, corners);
             Vector3 indexWorldPos = CalculateLandmarkWorldPosition(rawIndex, corners);
             
-            // Çizimin video ekranının önünde kalması için z-offset'i kesinleştiriyoruz
             Vector3 drawWorldPoint = Vector3.Lerp(thumbWorldPos, indexWorldPos, 0.5f);
 
-            // 3. AIR WRITER'A GÖNDER
-            airWriter.ProcessAirWriting(drawWorldPoint, isPinchActive);
+            // Hesaplanan stabil Pinch durumunu AirWriter'a gönderiyoruz
+            airWriter.ProcessAirWriting(drawWorldPoint, isCurrentlyPinching);
+        }
+        else
+        {
+            // El ekrandan tamamen çıkarsa çizimi anında bitir
+            if (isCurrentlyPinching)
+            {
+                isCurrentlyPinching = false;
+                pinchLostTimer = 0f;
+                
+                // Son noktayı göndererek çizginin havada kalmadan bitmesini sağla
+                airWriter.ProcessAirWriting(Vector3.zero, false); 
+            }
         }
     }
 
